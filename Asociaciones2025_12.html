@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Anexos III (v9 - Total Final)</title>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> --> <!-- Ya no se usa para TXT -->
+    <style>
+        /* CSS (Añadido CSS específico para % y total) */
+        body { font-family: sans-serif; font-size: 10pt; margin: 20px; line-height: 1.4; }
+        .anexo-container { border: 1px solid #ccc; padding: 20px; margin-bottom: 25px; }
+        #anexo-iii-funcionamiento { background-color: #eef4ff; border-color: #adcaff; }
+        #anexo-iii-mantenimiento { background-color: #f0fff0; border-color: #a6d9a6; }
+        /* --- NUEVO: Estilo para la suma total --- */
+        #total-solicitado-container {
+            background-color: #fff8e1; /* Amarillo pálido */
+            border: 1px solid #ffe57f; /* Borde amarillo más oscuro */
+            padding: 15px 20px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        #total-solicitado-container label {
+             font-size: 11pt;
+             margin-right: 10px;
+        }
+        #totalSolicitadoGeneral { /* El input del total general */
+            font-size: 12pt;
+            font-weight: bold;
+            color: #d32f2f; /* Rojo oscuro para destacar */
+             border: none;
+             background: transparent;
+             padding-left: 0;
+             width: auto; /* Ajustar tamaño al contenido */
+        }
+         /* --- FIN NUEVO --- */
+
+        .anexo-header { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 12pt; line-height: 1.5; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #b0b0b0; padding: 6px; text-align: left; vertical-align: top; background-color: #fff; }
+        th { background-color: #e8e8e8; font-weight: bold; }
+        label { margin-right: 5px; vertical-align: middle; font-weight: normal; }
+        input[type="text"], input[type="number"], input[type="radio"] { padding: 4px; border: 1px solid #ccc; box-sizing: border-box; margin-right: 5px; }
+        input[type="text"], input[type="number"]{ width: 95%; margin-bottom: 3px; }
+        input[type="radio"] { width: auto; margin-left: 10px; vertical-align: middle; }
+        input.calculated { background-color: transparent; border: none; font-weight: bold; color: #333; padding-left: 0; }
+        .currency::before { content: "€ "; }
+        .total-row td { font-weight: bold; background-color: #f0f0f0; }
+        .section-title { font-weight: bold; margin-top: 20px; margin-bottom: 8px; }
+        button { padding: 6px 12px; margin-top: 10px; cursor: pointer; margin-right: 10px; background-color: #d8d8d8; border: 1px solid #a0a0a0; border-radius: 3px; }
+        button:hover { background-color: #c8c8c8; }
+        .col-concepto { width: 40%; }
+        .col-importe { width: 20%; }
+        .input-group { margin-bottom: 10px; }
+        .input-explanation { display: block; font-size: 8pt; color: #555; margin-top: 0px; margin-left: 2px; }
+        .limite-activo { color: #e67e22; font-style: italic; font-weight: bold; }
+        .validation-error { display: none; color: red; font-size: 8pt; font-weight: bold; margin-left: 2px; margin-top: 2px; display: block; min-height: 1em; }
+        input.invalid { border: 1px solid red !important; background-color: #fff0f0 !important; }
+        .subvenciones-si-fields { display: none; padding-left: 20px; margin-top: 5px; border-left: 2px solid #ddd; }
+        .subvenciones-si-fields label, .subvenciones-si-fields input { display: block; margin-bottom: 5px; width: 90%; }
+        .validation-message { color: red; font-size: 9pt; display: none; margin-left: 10px; font-weight: bold; }
+
+        /* --- NUEVO: Ancho específico para inputs de % --- */
+        .input-group #financiacionPropiaFunc,
+        .input-group #financiacionPropiaMant {
+            width: 60px; /* Ancho fijo más pequeño */
+            text-align: right; /* Alinear número a la derecha */
+            margin-right: 2px; /* Espacio antes de '%' */
+        }
+        /* --- FIN NUEVO --- */
+
+    </style>
+</head>
+<body>
+
+<h1>Simulador Formulario Subvenciones (v9 - Total Final)</h1>
+
+<!-- == Contenedor Anexo III - Funcionamiento == -->
+<div id="anexo-iii-funcionamiento" class="anexo-container">
+    <div class="anexo-header">ANEXO III<br>GASTOS DE FUNCIONAMIENTO</div>
+    <div class="section-title">1. Entidad solicitante:</div>
+    <div class="input-group"><label for="nombreEntidadFunc">Nombre:</label><input type="text" id="nombreEntidadFunc" value="Func - Asociación Ejemplo"></div>
+    <div class="input-group"><label for="representanteLegalFunc">Representante:</label><input type="text" id="representanteLegalFunc"></div>
+    <div class="section-title">4. Resumen económico:</div>
+    <div class="input-group"><label for="costeTotalFunc">4.1 Coste total Funcionamiento*:</label><input type="text" id="costeTotalFunc" class="currency calculated" readonly></div>
+    <div class="section-title">4.2 Presupuesto desglosado:</div>
+    <table id="tablaDesgloseFunc">
+        <thead><tr><th class="col-concepto">DESGLOSE...</th><th class="col-importe">Neto</th><th class="col-importe">IVA</th><th class="col-importe">Total</th></tr></thead>
+        <tbody>
+            <tr><td><input type="text" placeholder="Concepto Func 1" value="Concepto A"></td><td><input type="number" step="0.01" value="1000.00" class="importe-neto" oninput="calcularTotales('Func')"><span class="validation-error"></span></td><td><input type="number" step="0.01" value="0.00" class="importe-iva" oninput="calcularTotales('Func')"><span class="validation-error"></span></td><td><input type="text" class="importe-total-linea currency calculated" readonly></td></tr>
+            <tr><td><input type="text" placeholder="Concepto Func 2" value="Concepto B"></td><td><input type="number" step="0.01" value="500.50" class="importe-neto" oninput="calcularTotales('Func')"><span class="validation-error"></span></td><td><input type="number" step="0.01" value="105.11" class="importe-iva" oninput="calcularTotales('Func')"><span class="validation-error"></span></td><td><input type="text" class="importe-total-linea currency calculated" readonly></td></tr>
+        </tbody>
+        <tfoot><tr class="total-row"><td>Coste total presupuesto</td><td><input type="text" id="totalNetoFunc" class="currency calculated" readonly></td><td><input type="text" id="totalIVAFunc" class="currency calculated" readonly></td><td><input type="text" id="totalTotalFunc" class="currency calculated" readonly></td></tr></tfoot>
+    </table>
+    <button type="button" onclick="anadirFila('Func')">Añadir Fila Funcionamiento</button>
+    <div class="section-title">4.3 Compromiso financiación propia:</div>
+    <div class="input-group">
+        <label for="financiacionPropiaFunc">% Financiación Propia:</label>
+        <input type="number" id="financiacionPropiaFunc" value="70.00" min="0" max="100" step="0.01" oninput="calcularImporteSolicitado('Func')"> %
+        <span class="input-explanation">(Mín. 70% requerido por normativa)</span>
+        <span class="validation-error" id="valErrorFinanPropiaFunc"></span>
+    </div>
+    <div class="section-title">4.4 Otras subvenciones públicas o privadas:</div>
+    <div class="input-group">
+        <input type="radio" id="percibenSiFunc" name="percibenFunc" value="si" onchange="toggleOtrasSubvencionesFields('Func', true)">
+        <label for="percibenSiFunc">Sí se perciben</label>
+        <input type="radio" id="percibenNoFunc" name="percibenFunc" value="no" checked onchange="toggleOtrasSubvencionesFields('Func', false)">
+        <label for="percibenNoFunc">No se perciben</label>
+        <span class="validation-message" id="valMsgPercibenFunc">Debe seleccionar una opción.</span>
+    </div>
+    <div class="subvenciones-si-fields" id="fieldsPercibenSiFunc">
+        <div class="input-group"><label for="organoFunc">Indicar Órgano concedente:</label><input type="text" id="organoFunc"><span class="validation-error" id="valErrorOrganoFunc"></span></div>
+        <div class="input-group"><label for="importeOtraFunc">Importe (€):</label><input type="number" id="importeOtraFunc" step="0.01"><span class="validation-error" id="valErrorImporteOtraFunc"></span></div>
+    </div>
+    <div class="section-title">4.5 Importe solicitado subvención Funcionamiento:</div>
+    <div class="input-group">
+        <input type="text" id="importeSolicitadoFunc" class="currency calculated" readonly>
+        <span class="input-explanation" id="limiteExplicativoFunc"></span>
+    </div>
+    <button type="button" onclick="exportarAnexoTXT('Func')">Exportar Anexo III Funcionamiento a TXT</button>
+</div>
+
+<!-- == Contenedor Anexo III - Mantenimiento == -->
+<div id="anexo-iii-mantenimiento" class="anexo-container">
+    <div class="anexo-header">ANEXO III<br>GASTOS DE MANTENIMIENTO Y/O REPARACIÓN</div>
+    <div class="section-title">1. Entidad solicitante:</div>
+    <div class="input-group"><label for="nombreEntidadMant">Nombre:</label><input type="text" id="nombreEntidadMant" value="Mant - Asociación Ejemplo"></div>
+    <div class="input-group"><label for="representanteLegalMant">Representante:</label><input type="text" id="representanteLegalMant"></div>
+    <div class="section-title">4. Resumen económico:</div>
+    <div class="input-group"><label for="costeTotalMant">4.1 Coste total Mantenimiento*:</label><input type="text" id="costeTotalMant" class="currency calculated" readonly></div>
+    <div class="section-title">4.2 Presupuesto desglosado:</div>
+    <table id="tablaDesgloseMant">
+       <thead><tr><th class="col-concepto">DESGLOSE...</th><th class="col-importe">Neto</th><th class="col-importe">IVA</th><th class="col-importe">Total</th></tr></thead>
+       <tbody>
+             <tr><td><input type="text" placeholder="Concepto Mant 1" value="Reparación X"></td><td><input type="number" step="0.01" value="2000.00" class="importe-neto" oninput="calcularTotales('Mant')"><span class="validation-error"></span></td><td><input type="number" step="0.01" value="50.00" class="importe-iva" oninput="calcularTotales('Mant')"><span class="validation-error"></span></td><td><input type="text" class="importe-total-linea currency calculated" readonly></td></tr>
+       </tbody>
+        <tfoot><tr class="total-row"><td>Coste total presupuesto</td><td><input type="text" id="totalNetoMant" class="currency calculated" readonly></td><td><input type="text" id="totalIVAMant" class="currency calculated" readonly></td><td><input type="text" id="totalTotalMant" class="currency calculated" readonly></td></tr></tfoot>
+    </table>
+    <button type="button" onclick="anadirFila('Mant')">Añadir Fila Mantenimiento</button>
+    <div class="section-title">4.3 Compromiso financiación propia:</div>
+    <div class="input-group">
+        <label for="financiacionPropiaMant">% Financiación Propia:</label>
+        <input type="number" id="financiacionPropiaMant" value="5.00" min="0" max="100" step="0.01" oninput="calcularImporteSolicitado('Mant')"> %
+        <span class="input-explanation">(Mín. 5% requerido por normativa)</span>
+        <span class="validation-error" id="valErrorFinanPropiaMant"></span>
+    </div>
+    <div class="section-title">4.4 Otras subvenciones públicas o privadas:</div>
+    <div class="input-group">
+        <input type="radio" id="percibenSiMant" name="percibenMant" value="si" onchange="toggleOtrasSubvencionesFields('Mant', true)">
+        <label for="percibenSiMant">Sí se perciben</label>
+        <input type="radio" id="percibenNoMant" name="percibenMant" value="no" checked onchange="toggleOtrasSubvencionesFields('Mant', false)">
+        <label for="percibenNoMant">No se perciben</label>
+        <span class="validation-message" id="valMsgPercibenMant">Debe seleccionar una opción.</span>
+    </div>
+    <div class="subvenciones-si-fields" id="fieldsPercibenSiMant">
+        <div class="input-group"><label for="organoMant">Indicar Órgano concedente:</label><input type="text" id="organoMant"><span class="validation-error" id="valErrorOrganoMant"></span></div>
+        <div class="input-group"><label for="importeOtraMant">Importe (€):</label><input type="number" id="importeOtraMant" step="0.01"><span class="validation-error" id="valErrorImporteOtraMant"></span></div>
+    </div>
+    <div class="section-title">4.5 Importe solicitado subvención Mantenimiento:</div>
+    <div class="input-group">
+        <input type="text" id="importeSolicitadoMant" class="currency calculated" readonly>
+        <span class="input-explanation" id="limiteExplicativoMant"></span>
+    </div>
+    <button type="button" onclick="exportarAnexoTXT('Mant')">Exportar Anexo III Mantenimiento a TXT</button>
+</div>
+
+<!-- == NUEVO: Suma Total Solicitada == -->
+<div id="total-solicitado-container">
+    <label for="totalSolicitadoGeneral">CUANTÍA TOTAL SOLICITADA (Funcionamiento + Mantenimiento):</label>
+    <input type="text" id="totalSolicitadoGeneral" class="currency calculated" readonly>
+</div>
+
+<script>
+    // JavaScript (con actualización de total combinado)
+
+    function customRound(num, decimalPlaces) { /* ... (igual) ... */
+        const factor = Math.pow(10, decimalPlaces); return Math.round((num + Number.EPSILON) * factor) / factor;
+    }
+    function clearError(elementId) { /* ... (igual) ... */
+         const errorSpan = document.getElementById(elementId); const inputElement = document.getElementById(elementId.replace('valError', '')); if (errorSpan) errorSpan.textContent = ''; if (inputElement) inputElement.classList.remove('invalid');
+    }
+    function showError(elementId, message) { /* ... (igual) ... */
+         const errorSpan = document.getElementById(elementId); const inputElement = document.getElementById(elementId.replace('valError', '')); if (errorSpan) errorSpan.textContent = message; if (inputElement) inputElement.classList.add('invalid');
+    }
+    function calcularTotales(anexoType) { /* ... (igual que v7) ... */
+         let totalNetoGeneral = 0, totalIVAGeneral = 0, totalTotalGeneral = 0, isValidTable = true; const tablaBody = document.getElementById(`tablaDesglose${anexoType}`)?.querySelector('tbody'); if (!tablaBody) { console.error(`No tbody ${anexoType}`); return; } const filas = tablaBody.querySelectorAll('tr');
+         filas.forEach(fila => { const inputNeto = fila.querySelector('.importe-neto'), inputIVA = fila.querySelector('.importe-iva'), outputTotalLinea = fila.querySelector('.importe-total-linea'), errorNetoSpan = inputNeto.nextElementSibling, errorIVASpan = inputIVA.nextElementSibling; if(errorNetoSpan) errorNetoSpan.textContent = ''; if(errorIVASpan) errorIVASpan.textContent = ''; inputNeto.classList.remove('invalid'); inputIVA.classList.remove('invalid'); const neto = parseFloat(inputNeto.value), iva = parseFloat(inputIVA.value); let validRow = true; if (isNaN(neto) || neto < 0) { if(errorNetoSpan) errorNetoSpan.textContent = 'Inválido'; inputNeto.classList.add('invalid'); isValidTable = false; validRow = false; } if (isNaN(iva) || iva < 0) { if(errorIVASpan) errorIVASpan.textContent = 'Inválido'; inputIVA.classList.add('invalid'); isValidTable = false; validRow = false; } const netoVal = isNaN(neto) || neto < 0 ? 0 : neto, ivaVal = isNaN(iva) || iva < 0 ? 0 : iva, totalLinea = netoVal + ivaVal; outputTotalLinea.value = totalLinea.toFixed(2); totalNetoGeneral += netoVal; totalIVAGeneral += ivaVal; totalTotalGeneral += totalLinea; });
+         const roundedNetoGeneral = customRound(totalNetoGeneral, 2), roundedIVAGeneral = customRound(totalIVAGeneral, 2), roundedTotalGeneral = customRound(totalTotalGeneral, 2);
+         try { document.getElementById(`totalNeto${anexoType}`).value = roundedNetoGeneral.toFixed(2); document.getElementById(`totalIVA${anexoType}`).value = roundedIVAGeneral.toFixed(2); document.getElementById(`totalTotal${anexoType}`).value = roundedTotalGeneral.toFixed(2); document.getElementById(`costeTotal${anexoType}`).value = roundedTotalGeneral.toFixed(2); } catch (e) { console.error(`Error actualizando totales ${anexoType}:`, e); }
+         if (isValidTable) { calcularImporteSolicitado(anexoType); } else { document.getElementById(`importeSolicitado${anexoType}`).value = 'Error tabla'; actualizarTotalCombinado(); /* Actualizar total aunque haya error en tabla */ }
+    }
+    function anadirFila(anexoType) { /* ... (igual que v7) ... */
+         const tablaBody = document.getElementById(`tablaDesglose${anexoType}`)?.querySelector('tbody'); if (!tablaBody) return; const filasExistentes = tablaBody.querySelectorAll('tr'); const plantilla = filasExistentes.length > 0 ? filasExistentes[0] : null; if (!plantilla) { console.error("No plantilla:", anexoType); return; } const nuevaFila = plantilla.cloneNode(true); const inputs = nuevaFila.querySelectorAll('input'); inputs.forEach(input => { if (input.type === 'text' && !input.readOnly) input.value = ''; if (input.type === 'number') input.value = '0.00'; if (input.classList.contains('importe-total-linea')) input.value = '0.00'; if (input.type === 'number' && !input.hasAttribute('oninput')) { input.setAttribute('oninput', `calcularTotales('${anexoType}')`);} const errorSpan = input.nextElementSibling; if (errorSpan && errorSpan.classList.contains('validation-error')) { errorSpan.textContent = '';} input.classList.remove('invalid'); }); tablaBody.appendChild(nuevaFila); const primerInput = nuevaFila.querySelector('input[type="text"]'); if (primerInput) primerInput.focus();
+    }
+    function calcularImporteSolicitado(anexoType) { /* ... (igual que v7) ... */
+         const costeTotalInput = document.getElementById(`totalTotal${anexoType}`), financiacionPropiaInput = document.getElementById(`financiacionPropia${anexoType}`), outputSolicitado = document.getElementById(`importeSolicitado${anexoType}`), limiteExplicativoSpan = document.getElementById(`limiteExplicativo${anexoType}`), errorFinanPropiaSpan = document.getElementById(`valErrorFinanPropia${anexoType}`); clearError(`valErrorFinanPropia${anexoType}`); if (!costeTotalInput || !financiacionPropiaInput || !outputSolicitado || !limiteExplicativoSpan || !errorFinanPropiaSpan) { console.error(`Faltan elem 4.5 ${anexoType}.`); return;} const costeTotal = parseFloat(costeTotalInput.value) || 0; const financiacionPropiaPct = parseFloat(financiacionPropiaInput.value); let isValidFinanPct = true; if (isNaN(financiacionPropiaPct) || financiacionPropiaPct < 0 || financiacionPropiaPct > 100) { showError(`valErrorFinanPropia${anexoType}`, 'Valor 0-100.'); isValidFinanPct = false; }
+         if (costeTotal <= 0 || !isValidFinanPct) { outputSolicitado.value = '0.00'; limiteExplicativoSpan.textContent = ''; actualizarTotalCombinado(); return; } const financiacionPropiaDecimal = financiacionPropiaPct / 100; let importePorFinanciacion = costeTotal * (1 - financiacionPropiaDecimal); if (financiacionPropiaDecimal < 0 || financiacionPropiaDecimal > 1) { importePorFinanciacion = 0;} let importeMaximoPermitido = 0, textoLimiteBase = '', limiteActivo = false, minFinanRequerido = 0;
+         if (anexoType === 'Func') { minFinanRequerido = 70; importeMaximoPermitido = costeTotal * 0.30; textoLimiteBase = '(* Máx. 30% coste total)'; if (financiacionPropiaPct < minFinanRequerido) { showError(`valErrorFinanPropia${anexoType}`, `Aviso: Mínimo requerido ${minFinanRequerido}%.`); financiacionPropiaInput.classList.remove('invalid');} } else if (anexoType === 'Mant') { minFinanRequerido = 5; importeMaximoPermitido = costeTotal * 0.95; textoLimiteBase = '(* Máx. 95% coste total)'; if (financiacionPropiaPct < minFinanRequerido) { showError(`valErrorFinanPropia${anexoType}`, `Aviso: Mínimo requerido ${minFinanRequerido}%.`); financiacionPropiaInput.classList.remove('invalid');} }
+         let importeFinalSolicitado = Math.min(importePorFinanciacion, importeMaximoPermitido); if (Math.abs(importeFinalSolicitado - importeMaximoPermitido) < 0.001 && importePorFinanciacion > importeMaximoPermitido) { limiteActivo = true; } importeFinalSolicitado = Math.max(0, importeFinalSolicitado); const importeRedondeado = customRound(importeFinalSolicitado, 2); outputSolicitado.value = importeRedondeado.toFixed(2);
+         if (limiteActivo) { limiteExplicativoSpan.textContent = textoLimiteBase.replace('Máx.', 'Límite MÁX.') + ' aplicado'; limiteExplicativoSpan.classList.add('limite-activo'); } else { limiteExplicativoSpan.textContent = textoLimiteBase.replace('Máx.', 'Calculado s/finan., máx.') ; limiteExplicativoSpan.classList.remove('limite-activo'); }
+         actualizarTotalCombinado(); // Asegura actualizar el total general
+    }
+    function toggleOtrasSubvencionesFields(anexoType, show) { /* ... (igual que v7) ... */
+         const fieldsDiv = document.getElementById(`fieldsPercibenSi${anexoType}`), organoInput = document.getElementById(`organo${anexoType}`), importeInput = document.getElementById(`importeOtra${anexoType}`), msgValRadio = document.getElementById(`valMsgPerciben${anexoType}`); clearError(`valErrorOrgano${anexoType}`); clearError(`valErrorImporteOtra${anexoType}`); msgValRadio.style.display = 'none'; if (show) { fieldsDiv.style.display = 'block'; } else { fieldsDiv.style.display = 'none'; organoInput.value = ''; importeInput.value = ''; }
+    }
+
+    // --- FUNCIÓN ACTUALIZADA PARA SUMAR TOTALES ---
+    function actualizarTotalCombinado() {
+        const totalFuncInput = document.getElementById('importeSolicitadoFunc');
+        const totalMantInput = document.getElementById('importeSolicitadoMant');
+        const outputTotalGeneral = document.getElementById('totalSolicitadoGeneral');
+
+        // Leer valores, manejar "Error tabla" u otros textos no numéricos
+        const totalFunc = (totalFuncInput && !isNaN(parseFloat(totalFuncInput.value))) ? parseFloat(totalFuncInput.value) : 0;
+        const totalMant = (totalMantInput && !isNaN(parseFloat(totalMantInput.value))) ? parseFloat(totalMantInput.value) : 0;
+
+        const totalGeneral = totalFunc + totalMant;
+        const roundedTotalGeneral = customRound(totalGeneral, 2);
+
+        if(outputTotalGeneral) {
+             outputTotalGeneral.value = roundedTotalGeneral.toFixed(2);
+         }
+         console.log(`Total Combinado Actualizado a: ${roundedTotalGeneral.toFixed(2)}`);
+    }
+    // --- FIN FUNCIÓN ACTUALIZADA ---
+
+
+    function exportarAnexoTXT(anexoType) { /* ... (igual que v7, incluida validación) ... */
+       let isValid = true; const radioSi = document.getElementById(`percibenSi${anexoType}`), radioNo = document.getElementById(`percibenNo${anexoType}`), msgValRadio = document.getElementById(`valMsgPerciben${anexoType}`); clearError(`valErrorFinanPropia${anexoType}`); if (!radioSi.checked && !radioNo.checked) { msgValRadio.style.display = 'inline'; isValid = false; } else { msgValRadio.style.display = 'none'; }
+       if (radioSi.checked) { const organoInput = document.getElementById(`organo${anexoType}`), importeInput = document.getElementById(`importeOtra${anexoType}`); clearError(`valErrorOrgano${anexoType}`); clearError(`valErrorImporteOtra${anexoType}`); if (!organoInput.value.trim()) { showError(`valErrorOrgano${anexoType}`, 'Requerido.'); isValid = false; } const importeVal = parseFloat(importeInput.value); if (!importeInput.value.trim() || isNaN(importeVal) || importeVal < 0) { showError(`valErrorImporteOtra${anexoType}`, 'Inválido.'); isValid = false; } }
+       const tablaBody = document.getElementById(`tablaDesglose${anexoType}`)?.querySelector('tbody'); if (tablaBody && tablaBody.querySelector('.invalid')) { isValid = false; alert(`Error: Revise importes en tabla 4.2 ${anexoType}.`);} const financiacionInput = document.getElementById(`financiacionPropia${anexoType}`); const financiacionPct = parseFloat(financiacionInput.value); if (isNaN(financiacionPct) || financiacionPct < 0 || financiacionPct > 100) { showError(`valErrorFinanPropia${anexoType}`, 'Valor 0-100.'); isValid = false; } else { const minReq = (anexoType === 'Func') ? 70 : 5; if (financiacionPct < minReq) { showError(`valErrorFinanPropia${anexoType}`, `Aviso: Mínimo requerido ${minReq}%.`); financiacionInput.classList.remove('invalid'); } }
+       if (!isValid) { alert(`Error: Corrija errores en Anexo III ${anexoType}.`); return; }
+       const textoParaArchivo = generarTextoAnexo(anexoType); const nombreEntidadInput = document.getElementById(`nombreEntidad${anexoType}`); const nombreEntidad = nombreEntidadInput ? nombreEntidadInput.value.trim().replace(/[^a-zA-Z0-9_-]/g,'_') : 'Entidad_Desconocida'; const nombreArchivoFinal = `${nombreEntidad}_ANEXO_III_${anexoType}.txt`; const blob = new Blob([textoParaArchivo], { type: 'text/plain;charset=utf-8' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", nombreArchivoFinal); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); console.log("TXT generado:", nombreArchivoFinal);
+   }
+
+    function generarTextoAnexo(anexoType) { /* ... (igual que v7) ... */
+       let texto = ""; const nl = "\n", tab = "\t"; texto += `ANEXO III${nl}GASTOS DE ${anexoType === 'Func' ? 'FUNCIONAMIENTO' : 'MANTENIMIENTO Y/O REPARACIÓN'}${nl}========================================${nl}${nl}`; texto += `== 1. Entidad Solicitante ==${nl}Nombre: ${document.getElementById(`nombreEntidad${anexoType}`).value}${nl}Representante: ${document.getElementById(`representanteLegal${anexoType}`).value}${nl}${nl}`; texto += `== 4. Resumen Económico ==${nl}4.1 Coste Total ${anexoType === 'Func' ? 'Funcionamiento' : 'Mantenimiento'}: ${document.getElementById(`costeTotal${anexoType}`).value} €${nl}${nl}`; texto += `4.2 Presupuesto Desglosado:${nl}CONCEPTO${tab}${tab}${tab}| NETO${tab}| IVA${tab}| TOTAL${nl}----------------------------------------|-----------|-----------|-----------${nl}`; const tablaBody = document.getElementById(`tablaDesglose${anexoType}`)?.querySelector('tbody'); if(tablaBody){const filas = tablaBody.querySelectorAll('tr'); filas.forEach(fila => { const concepto = fila.querySelector('input[type="text"]').value || '(Sin concepto)', neto = (parseFloat(fila.querySelector('.importe-neto').value) || 0).toFixed(2), iva = (parseFloat(fila.querySelector('.importe-iva').value) || 0).toFixed(2), totalLinea = (parseFloat(fila.querySelector('.importe-total-linea').value) || 0).toFixed(2); texto += `${concepto.padEnd(40, ' ').substring(0, 39)}| ${neto.padStart(9, ' ')} | ${iva.padStart(9, ' ')} | ${totalLinea.padStart(9, ' ')}${nl}`; });} texto += `----------------------------------------|-----------|-----------|-----------${nl}`; const totalNeto = document.getElementById(`totalNeto${anexoType}`).value || '0.00', totalIVA = document.getElementById(`totalIVA${anexoType}`).value || '0.00', totalTotal = document.getElementById(`totalTotal${anexoType}`).value || '0.00'; texto += `Coste total presupuesto:${tab}${tab}| ${totalNeto.padStart(9, ' ')} | ${totalIVA.padStart(9, ' ')} | ${totalTotal.padStart(9, ' ')}${nl}${nl}`; texto += `4.3 Compromiso financiación propia: ${document.getElementById(`financiacionPropia${anexoType}`).value} %${nl}`; const errorFinanSpan = document.getElementById(`valErrorFinanPropia${anexoType}`); if (errorFinanSpan && errorFinanSpan.textContent.includes('Aviso')) { texto += `   ${errorFinanSpan.textContent}${nl}`;} texto += nl; texto += `4.4 Otras subvenciones:${nl}`; const radioSi = document.getElementById(`percibenSi${anexoType}`); if (radioSi.checked) { texto += `   Opción seleccionada: Sí se perciben${nl}   Órgano concedente: ${document.getElementById(`organo${anexoType}`).value}${nl}   Importe: ${document.getElementById(`importeOtra${anexoType}`).value || '0.00'} €${nl}`; } else { texto += `   Opción seleccionada: No se perciben${nl}`; } texto += nl; texto += `4.5 Importe solicitado subvención: ${document.getElementById(`importeSolicitado${anexoType}`).value} €${nl}   ${document.getElementById(`limiteExplicativo${anexoType}`).textContent}${nl}`; return texto;
+   }
+
+
+    // Inicialización al cargar
+    window.onload = function() {
+        calcularTotales('Func');
+        calcularTotales('Mant');
+        toggleOtrasSubvencionesFields('Func', document.getElementById('percibenSiFunc').checked);
+        toggleOtrasSubvencionesFields('Mant', document.getElementById('percibenSiMant').checked);
+        // Calcular el total combinado inicial
+        actualizarTotalCombinado();
+    };
+</script>
+
+</body>
+</html>
